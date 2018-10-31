@@ -29,8 +29,17 @@ meta
 meta <- dws.meta("station:heluwobs:deko")
 meta
 
-# access a properties of a sensor
+# access properties of a sensor
 meta$map$`station:heluwobs:fb_730201:sbe38_9999a:Temperature`$properties$range
 meta$map[["station:heluwobs:fb_730201:sbe38_9999a:Temperature"]]$properties$range
+
+
+# use case: find sensor, get data, see metadata
+sensors <- dws.sensors("station:helu*temp*")
+data <- dws.get("station:heluwobs:fb_730201:sbe38_9999a:temperature", begin = "2018-10-01", end = "2018-10-31", aggregate = "second")
+meta <- dws.meta("station:heluwobs")
+data$flag_in_range <-
+  meta$map$`station:heluwobs:fb_730201:sbe38_9999a:Temperature`$properties$range$lower < data$station.heluwobs.fb_730201.sbe38_9999a.temperature..Â.C. &&
+  meta$map$`station:heluwobs:fb_730201:sbe38_9999a:Temperature`$properties$range$upper > data$station.heluwobs.fb_730201.sbe38_9999a.temperature..Â.C.
 
 

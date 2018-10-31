@@ -8,7 +8,7 @@ require(jsonlite)
 
 
 dws.SENSOR_BASE_URL <- "https://sensor.awi.de/rest"
-dws.DATA_BASE_URL <- "https://dashboard.awi.de/data/rest"
+dws.DATA_BASE_URL <- "https://dashboard.awi.de/data-xxl/rest"
 
 
 
@@ -71,7 +71,7 @@ dws.get <- function(sensors, begin, end, aggregate = "hour") {
     "?format=text/tab-separated-values",
     "&beginDate=", URLencode(begin),
     "&endDate=", URLencode(end),
-    '&aggregate=', aggregate,
+    '&aggregate=', toupper(aggregate),
     sep = "")
 
   for (sensor in sensors) {
