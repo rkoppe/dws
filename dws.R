@@ -92,7 +92,7 @@ dws.get <- function(sensors, begin, end, aggregate = "hour") {
 #'
 dws.sensor <- function(code) {
   # validation
-  if (missing(sensors)) {
+  if (missing(code)) {
     stop("Code must be defined.")
   }
 
