@@ -83,7 +83,7 @@ dws.get <- function(sensors, begin, end, aggregate = "hour") {
   
   
   # request data
-  read.csv(query, sep = "\t")
+  read.csv(query, sep = "\t", encoding = "UTF-8")
 }
 
 

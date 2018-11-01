@@ -39,7 +39,7 @@ sensors <- dws.sensors("station:helu*temp*")
 data <- dws.get("station:heluwobs:fb_730201:sbe38_9999a:temperature", begin = "2018-10-01", end = "2018-10-31", aggregate = "second")
 meta <- dws.meta("station:heluwobs")
 data$flag_in_range <-
-  meta$map$`station:heluwobs:fb_730201:sbe38_9999a:Temperature`$properties$range$lower < data$station.heluwobs.fb_730201.sbe38_9999a.temperature..Â.C. &&
-  meta$map$`station:heluwobs:fb_730201:sbe38_9999a:Temperature`$properties$range$upper > data$station.heluwobs.fb_730201.sbe38_9999a.temperature..Â.C.
+  meta$map$`station:heluwobs:fb_730201:sbe38_9999a:Temperature`$properties$range$lower < data$station.heluwobs.fb_730201.sbe38_9999a.temperature...C. &&
+  meta$map$`station:heluwobs:fb_730201:sbe38_9999a:Temperature`$properties$range$upper > data$station.heluwobs.fb_730201.sbe38_9999a.temperature...C.
 
 
