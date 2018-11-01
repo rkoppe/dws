@@ -43,3 +43,51 @@ data$flag_in_range <-
   meta$map$`station:heluwobs:fb_730201:sbe38_9999a:Temperature`$properties$range$upper > data$station.heluwobs.fb_730201.sbe38_9999a.temperature...C.
 
 
+
+source("dws.R")
+sensor <- dws.sensor("station:svluwobs:svluw2:ctd_181:temperature_sensor_01:Temperature")
+sensor
+
+
+
+data <- dws.get("station:svluwobs:svluw2:ctd_181:temperature", begin="2018-10-15", end="2018-11-05")
+meta <- dws.meta("station:svluwobs")
+
+range <- meta$map$`station:svluwobs:svluw2:ctd_181:temperature_sensor_01:temperature`$properties$local_range
+range
+
+spike <- meta$map$`station:svluwobs:svluw2:ctd_181:temperature_sensor_01:temperature`$properties$crit_spike_value
+spike
+
+data$range_check <- 
+  range$lower < data$station.svluwobs.svluw2.ctd_181.temperature..mean....C. &&
+  range$upper > data$station.svluwobs.svluw2.ctd_181.temperature..mean....C.
+
+
+
+
+
+sensors <- dws.sensors("station:svluwobs:svluw2:ctd_181*")
+sensors
+
+data <- dws.get(
+  c("station:svluwobs:svluw2:ctd_181:temperature", "station:svluwobs:svluw2:ctd_181:pressure"),
+  begin="2018-10-01",
+  end="2018-11-05",
+  aggregate = "hour")
+head(data)
+
+library(ggplot2)
+library(scales)
+
+data$timestamp <- as.POSIXct(data$datetime, format = "%Y-%m-%dT%H:%M:%S")
+gg <- ggplot(data, aes(x = timestamp, y = -station.svluwobs.svluw2.ctd_181.pressure..mean...dbar.)) +
+  geom_point(aes(col = station.svluwobs.svluw2.ctd_181.temperature..mean....C.)) +
+  labs(x = "datetime", y = "~ depth [m]", "ok") +
+#  scale_color_gradient(low = "blue", mid = "green", high = "red")
+#  scale_color_gradientn(colors = c("blue","red"), name = "temperature")
+  scale_color_gradientn(colors = rev(rainbow(5)), name = "temperature [°C]") +
+  scale_x_datetime(labels = date_format("%Y-%m-%d"), date_breaks = "7 days") 
+#  coord_fixed(ratio =1)
+options(repr.plot.width=10, repr.plot.height=8)
+plot(gg)
