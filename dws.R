@@ -25,7 +25,7 @@ dws.sensors <- function(pattern = NULL) {
   
   if (!is.null(pattern)) query = paste(query, "?pattern=", pattern, sep = "")
   
-  ls = readLines(query, encoding = "UTF-8", warn = FALSE)
+  ls = readLines(query, warn = FALSE)
   t = fromJSON(ls)
   t
 }
@@ -100,7 +100,8 @@ dws.sensor <- function(code) {
     dws.SENSOR_BASE_URL, "/sensors/sensorOutputs/getSensorOutputByUrn/",
     URLencode(code),
     sep = "")
-  ls = readLines(query, encoding = "UTF-8", warn = FALSE)
+  print(query)
+  ls = readLines(query, warn = FALSE)
   t = fromJSON(ls)
   
   r = list()
@@ -118,11 +119,10 @@ dws.sensor <- function(code) {
     dws.SENSOR_BASE_URL, "/sensors/measurementProperties/getSensorOutputMeasurementProperties/",
     r$id,
     sep = "")
-  ls = readLines(query, encoding = "UTF-8", warn = FALSE)
+  ls = readLines(query, warn = FALSE)
   t = fromJSON(ls)
 
   for (i in 1:nrow(t)) {
-    name = gsub(" ", "_", tolower(t[i, "measurementName"]))
     r["properties"][[1]][[t[i, "measurementName"]]] = list(
       id = t[i, "id"],
       lower = t[i, "lowerBound"],
@@ -158,7 +158,7 @@ dws.platform <- function(code) {
     URLencode(base),
     sep = "")
   
-  ls = readLines(query, encoding = "UTF-8", warn = FALSE)
+  ls = readLines(query, warn = FALSE)
   j = fromJSON(ls)
   
   r = list()
@@ -185,7 +185,7 @@ dws.meta <- function(code) {
     "?includeChildren=true",
     sep = "")
   
-  ls = readLines(query, encoding = "UTF-8", warn = FALSE)
+  ls = readLines(query, warn = FALSE)
   j = fromJSON(ls)
   
   # parse children
@@ -295,7 +295,7 @@ dws.meta.json <- function(code, pretty = FALSE) {
     "?includeChildren=true",
     sep = "")
   
-  ls = readLines(query, encoding = "UTF-8", warn = FALSE)
+  ls = readLines(query, warn = FALSE)
 
   if (pretty) {
     toJSON(fromJSON(ls), pretty = TRUE)
@@ -316,6 +316,6 @@ dws.meta.sensorML <- function(code) {
     platform$id,
     sep = "")
   
-  ls = readLines(query, encoding = "UTF-8", warn = FALSE)
+  ls = readLines(query, warn = FALSE)
   ls
 }
