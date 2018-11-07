@@ -4,7 +4,8 @@
 
 if (!"jsonlite" %in% installed.packages()) install.packages("jsonlite")
 require(jsonlite)
-
+if (!"httr" %in% installed.packages()) install.packages("httr")
+require(httr)
 
 
 dws.SENSOR_BASE_URL <- "https://sensor.awi.de/rest"
@@ -36,7 +37,7 @@ dws.sensors <- function(pattern = NULL) {
 #' in the given time range and selected aggregate.
 #' See https://dashboard.awi.de/data/ for documentation.
 #' 
-dws.get <- function(sensors, begin, end, aggregate = "hour") {
+dws.get <- function(sensors, begin, end, aggregate = "hour", aggregateFunctions = NULL, qualityFlags = NULL, withQualityFlags = FALSE, withLogicalCode = FALSE) {
   # validation
   if (missing(sensors)) {
     stop("Sensor(s) must be defined.")
@@ -61,6 +62,84 @@ dws.get <- function(sensors, begin, end, aggregate = "hour") {
     stop("Sensor(s) must be defined.")
   }
   
+  if (is.null(aggregateFunctions)) {
+    aggregateFunctions = list()
+  } else if (is.character(aggregateFunctions)) {
+    aggregateFunctions = list(aggregateFunctions)
+  }
+  
+  if (!is.null(qualityFlags) && (is.numeric(qualityFlags))) {
+    qualityFlags = list(qualityFlags)
+  }
+
+  # build query
+  if (nchar(begin) == 10) begin = paste(begin, "T00:00:00", sep = "")
+  if (nchar(end) == 10) end = paste(end, "T23:59:59", sep = "")
+
+  j = paste('{',
+    '"beginDate": "', begin, '", ',
+    '"endDate": "', end, '", ', 
+    '"sensors": ["', paste(unlist(sensors), collapse = '", "'), '"], ',
+    '"aggregate": "', toupper(aggregate), '", ',
+    ifelse(length(aggregateFunctions) > 0, paste('"aggregateFunctions": ["', paste(unlist(aggregateFunctions), collapse = '", "'), '"], ', sep = ''), ''), 
+    '"qualityFlags": [', paste(unlist(qualityFlags), collapse = ','), '], ',
+    '"withQualityFlags": ', ifelse(withQualityFlags, 'true', 'false'), ', ',
+    '"withLogicalCode": ', ifelse(withLogicalCode, 'true', 'false'),
+    '}',
+    sep = ''
+  )
+  
+  url = paste(dws.DATA_BASE_URL, "/data/bulk?format=text/tab-separated-values", sep = "")
+
+  # request data
+  r = POST(url, body = j, content_type_json())
+  stop_for_status(r)
+  c = content(r, "parsed", "text/plain", encoding = "UTF-8")
+
+  read.csv(text = c, sep = "\t", encoding = "UTF-8")
+}
+
+
+
+#' Loads data from the data service for given \code{sensors}
+#' in the given time range and selected aggregate.
+#' See https://dashboard.awi.de/data/ for documentation.
+#' 
+dws._get <- function(sensors, begin, end, aggregate = "hour", aggregateFunctions = NULL, qualityFlags = NULL, withQualityFlags = FALSE, withLogicalCode = FALSE) {
+  # validation
+  if (missing(sensors)) {
+    stop("Sensor(s) must be defined.")
+  }
+  if (missing(begin)) {
+    stop("Begin timestamp must be defined.")
+  }
+  if (missing(end)) {
+    stop("End timestamp must be defined.")
+  }
+  if (missing(aggregate)) {
+    aggregate = 'hour'
+  }
+  
+  
+  # transform sensor string to list
+  if (is.character(sensors)) {
+    sensors = c(sensors);
+  }
+  
+  if (length(sensors) < 1) {
+    stop("Sensor(s) must be defined.")
+  }
+  
+  if (is.null(aggregateFunctions)) {
+    aggregateFunctions = c()
+  } else if (is.character(aggregateFunctions)) {
+    aggregateFunctions = c(aggregateFunctions)
+  }
+  
+  if (is.numeric(qualityFlags)) {
+    qualityFlags = c(qualityFlags)
+  }
+  
   
   # build query
   if (nchar(begin) == 10) begin = paste(begin, "T00:00:00", sep = "")
@@ -73,7 +152,7 @@ dws.get <- function(sensors, begin, end, aggregate = "hour") {
     "&endDate=", URLencode(end),
     '&aggregate=', toupper(aggregate),
     sep = "")
-
+  
   for (sensor in sensors) {
     if (nchar(sensor) < 1) {
       stop("Empty sensor is invalid.")
@@ -81,6 +160,21 @@ dws.get <- function(sensors, begin, end, aggregate = "hour") {
     query = paste(query, "&sensors=", URLencode(sensor), sep = "")
   }
   
+  for (aggregateFunction in aggregateFunctions) {
+    query = paste(query, "&aggregateFunctions=", aggregateFunction, sep = "")
+  }
+  
+  for (qualityFlag in qualityFlags) {
+    query = paste(query, "&qualityFlags=", qualityFlag, sep = "")
+  }
+  
+  if (withQualityFlags) {
+    query = paste(query, "&withQualityFlags=true", sep = "")
+  }
+  
+  if (withLogicalCode) {
+    query = paste(query, "&withLogicalCode=true", sep = "")
+  }
   
   # request data
   read.csv(query, sep = "\t", encoding = "UTF-8")

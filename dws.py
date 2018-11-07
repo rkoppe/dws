@@ -39,7 +39,7 @@ class dws:
         
         
     @staticmethod
-    def get(sensors, begin: date, end: date, aggregate: str = 'hour'):
+    def get(sensors, begin: date, end: date, aggregate: str = 'hour', aggregateFunctions: list = None, qualityFlags: list = None, withQualityFlags: bool = False, withLogicalCode: bool = False):
         if sensors == None or len(sensors) == 0:
             raise Exception('Sensor(s) must be defined.')
 
@@ -64,6 +64,75 @@ class dws:
             else:
                 end = datetime.datetime.strptime(end, '%Y-%m-%dT%H:%M:%S')
         
+        if isinstance(aggregateFunctions, str):
+            aggregateFunctions = [aggregateFunctions]
+            
+        if qualityFlags != None and not isinstance(qualityFlags, list):
+            qualityFlags = [qualityFlags]
+        
+        request = {
+            'sensors': sensors,
+            'begin': begin.strftime('%Y-%m-%dT%H:%M:%S'),
+            'end': end.strftime('%Y-%m-%dT%H:%M:%S'),
+            'aggregate': aggregate.upper(),
+            'format': 'text/tab-separated-values',
+        }
+        
+        if aggregateFunctions != None:
+            request['aggregateFunctions'] = [a.upper() for a in aggregateFunctions]
+                
+        if qualityFlags != None:
+            request['qualityFlags'] = qualityFlags
+                
+        if withQualityFlags:
+            request['withQualityFlags'] = True
+            
+        if withLogicalCode:
+            request['withLogicalCode'] = True
+        
+        response = requests.post(dws.DATA_BASE_URL + '/data/bulk', json = request)
+        
+        if response.status_code != 200:
+            raise Exception('Error loading data.'.format(response.reason))
+
+        # build the data frame
+        df = pd.read_csv(StringIO(response.content.decode('UTF-8')), sep = '\t')
+        df['datetime'] = pd.to_datetime(df['datetime'])
+        return df
+
+
+    # deprecated    
+    @staticmethod
+    def _get(sensors, begin: date, end: date, aggregate: str = 'hour', aggregateFunctions: list = None, qualityFlags: list = None, withQualityFlags: bool = False, withLogicalCode: bool = False):
+        if sensors == None or len(sensors) == 0:
+            raise Exception('Sensor(s) must be defined.')
+
+        if begin == None:
+            raise Exception('Begin timestamp must be defined.')
+        
+        if end == None:
+            raise Exception('End timestamp must be defined.')
+        
+        if isinstance(sensors, str):
+            sensors = [sensors]
+            
+        if isinstance(begin, str):
+            if len(begin) == 10:
+                begin = datetime.datetime.strptime(begin, '%Y-%m-%d')
+            else:
+                begin = datetime.datetime.strptime(begin, '%Y-%m-%dT%H:%M:%S')
+                
+        if isinstance(end, str):
+            if len(end) == 10:
+                end = datetime.datetime.strptime(end, '%Y-%m-%d')
+            else:
+                end = datetime.datetime.strptime(end, '%Y-%m-%dT%H:%M:%S')
+        
+        if isinstance(aggregateFunctions, str):
+            aggregateFunctions = [aggregateFunctions]
+            
+        if not isinstance(qualityFlags, list):
+            qualityFlags = [qualityFlags]
         
         url = dws.DATA_BASE_URL + '/data' + \
             '?format=text/tab-separated-values' + \
@@ -73,7 +142,22 @@ class dws:
         
         for sensor in sensors:
             url += '&sensors=' + urllib.parse.quote_plus(sensor)
+            
+        if aggregateFunctions != None:
+            for aggregateFunction in aggregateFunctions:
+                url += '&aggregateFunctions=' + aggregateFunction.upper()
+                
+        if qualityFlags != None:
+            for qualityFlag in qualityFlags:
+                url += '&qualityFlags=' + str(qualityFlag)
+                
+        if withQualityFlags:
+            url += '&withQualityFlags=true'
+            
+        if withLogicalCode:
+            url += '&withLogicalCode=true'
         
+        print(url)
         response = requests.get(url, stream = True)
         
         if response.status_code != 200:
@@ -272,4 +356,4 @@ class dws:
             'map': map
         }
         return r
- 
+    
