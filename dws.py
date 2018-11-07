@@ -72,8 +72,8 @@ class dws:
         
         request = {
             'sensors': sensors,
-            'begin': begin.strftime('%Y-%m-%dT%H:%M:%S'),
-            'end': end.strftime('%Y-%m-%dT%H:%M:%S'),
+            'beginDate': begin.strftime('%Y-%m-%dT%H:%M:%S'),
+            'endDate': end.strftime('%Y-%m-%dT%H:%M:%S'),
             'aggregate': aggregate.upper(),
             'format': 'text/tab-separated-values',
         }
